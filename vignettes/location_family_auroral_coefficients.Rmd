@@ -1,0 +1,107 @@
+---
+title: "Auroral: Location family coefficient plots"
+author: "Nikos Ignatiadis"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteIndexEntry{Auroral: Location family coefficient plots}
+    \usepackage[utf8]{inputenc}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Preliminaries: Setup
+
+```{r warning=FALSE, message=FALSE, result=FALSE}
+library(tidyverse)
+library(cowplot)
+library(AuroraR)
+aurora_setup(JULIA_HOME="/Applications/Julia-1.5.app/Contents/Resources/julia/bin")
+```
+
+##  Coefficient figure
+
+```{r}
+set.seed(1)
+B <- 10
+n <- 20*10^4
+sigma <- sqrt(0.4)
+uninformative_A <- 20.0^2
+sim_list <- list( normal_normal_sim(n, B, sigma, uninformative_A, prior_mu=0.5),
+                  normal_laplace_sim(n, B, sigma, uninformative_A, prior_mu=0.5),
+                  normal_uniform_sim(n, B, sigma, uninformative_A, prior_mu=0.5)
+                 )
+
+prior_A <- 0.4
+sim_list_prior <- list( normal_normal_sim(n, B, sigma, prior_A, prior_mu=0.5),
+                  normal_laplace_sim(n, B, sigma, prior_A, prior_mu=0.5),
+                  normal_uniform_sim(n, B, sigma, prior_A, prior_mu=0.5)
+                 )
+```
+
+
+```{r}
+auroral_fits_list <- lapply(sim_list, 
+                            function(x) auroral(x$Zs, predictions_only=FALSE))
+```
+
+```{r}
+auroral_fits_list_prior <- lapply(sim_list_prior, 
+                              function(x) auroral(x$Zs, predictions_only=FALSE))
+```
+
+```{r fig.width = 12, fig.height = 4}
+auroral_fits_coef <- lapply(auroral_fits_list, function(x) x$betas)
+auroral_fits_coef_prior <- lapply(auroral_fits_list_prior, function(x) x$betas)
+coef_names <- c("Int.", paste0("X^(",1:(B-1),")"))
+
+uninf_prior <- "Uninformative Prior: G = Normal(0.5, 400)"
+inf_prior <- "Informative Prior: G = Normal(0.5, 0.4)"
+coef_df <- bind_rows( tibble(  coef_name=coef_names,
+                               coef=auroral_fits_coef[[1]],
+                               Prior=uninf_prior, Likelihood="Normal"),
+                      tibble(  coef_name=coef_names,
+                               coef=auroral_fits_coef[[2]], 
+                               Prior=uninf_prior, Likelihood="Laplace"), 
+                      tibble(  coef_name=coef_names, 
+                               coef=auroral_fits_coef[[3]],
+                               Prior=uninf_prior, Likelihood="Rectangular"),
+                      tibble(  coef_name=coef_names, 
+                               coef=auroral_fits_coef_prior[[1]],
+                               Prior=inf_prior, Likelihood="Normal"),
+                      tibble(  coef_name=coef_names,
+                               coef=auroral_fits_coef_prior[[2]], 
+                               Prior=inf_prior, Likelihood="Laplace"), 
+                      tibble(  coef_name=coef_names, 
+                               coef=auroral_fits_coef_prior[[3]],
+                               Prior=inf_prior, Likelihood="Rectangular")) %>%
+           mutate(Likelihood = factor(Likelihood, levels=c("Normal", "Laplace", "Rectangular")),
+                  Prior = factor(Prior, levels=c(uninf_prior, inf_prior))) %>% 
+           mutate(yend = ifelse(coef_name=="Int.", coef, 0))
+
+
+coef_plot <- ggplot(coef_df, aes(x=coef_name, y=coef, ymin=coef, ymax=yend, color=Prior, shape=Prior)) + 
+                             geom_point(size=3, position=position_dodge(width=0.7)) + 
+                             geom_linerange(position=position_dodge(width=0.7), alpha=0.7) + 
+                             ylab("Coefficient") + 
+                             xlab("")+
+                             scale_x_discrete(labels = function(l) parse(text=l)) + 
+                             facet_grid(~Likelihood, scales="free_y") + 
+                             theme(axis.text.x = element_text(angle = 0)) +
+                             theme_cowplot() +
+                             scale_color_manual(values=c("darkblue", "darkorange")) + 
+                             geom_vline(xintercept = c(0.42,1.5, 10.58), alpha=0.2) +
+                             theme(legend.position="top",legend.title=element_blank(), legend.justification = "center", legend.margin=margin())
+
+coef_plot
+save_plot("weight_plot.pdf",coef_plot, base_height=4, base_width=12)
+```
+
+## Session info
+```{r} 
+library("sessioninfo")
+options(width = 120)
+session_info()
+```

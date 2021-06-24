@@ -1,0 +1,104 @@
+---
+title: "Auroral: Pareto simulations"
+author: "Nikos Ignatiadis"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteIndexEntry{Auroral: Pareto simulations}
+    \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Preliminaries: Setup and load simulation results
+
+```{r warning=FALSE, message=FALSE, result=FALSE}
+library(tidyverse)
+library(cowplot)
+library(ggrepel)
+```
+
+```{r}
+files_dir <- file.path(getwd(),"..","simulation_scripts","files")
+files_names <- file.path(files_dir, str_subset(list.files(files_dir), "pareto"))
+pareto_res <-  lapply(files_names, readRDS)
+```
+
+```{r}
+# http://tsitsul.in/blog/coloropt/
+methods_list_pareto <- bind_rows( 
+      tibble(method = "auroral"          , method_pretty = "Auroral"    , short = "Al"   ,  color="#4053d3",  shrinkage="linear"),
+      tibble(method = "ccl"              , method_pretty = "CC-L"       , short = "CC-L" ,  color="#ddb310",  shrinkage="linear"), 
+      tibble(method = "location_mean"    , method_pretty = "Mean"       , short = "Mean" , color="#8c9fb7" ,  shrinkage="no shrinkage"),
+      tibble(method = "location_median"  , method_pretty = "Median"     , short = "Med." ,  color="#ff9287",  shrinkage="no shrinkage"),
+      tibble(method = "pareto_mle"       , method_pretty = "Pareto MLE"   , short = "MR"   , color="#00bbad" ,  shrinkage="no shrinkage")
+        ) %>%
+      mutate(method_pretty=factor(method_pretty, levels=method_pretty))
+```
+
+## Plotting of results
+
+                             
+
+
+```{r}
+pareto_eval_df <- bind_rows(pareto_res) %>% 
+                         group_by(method, unif_ub, n,B) %>% 
+                         summarize(MSE=mean(error)) %>%
+                         filter(!(B==20 & n==100000)) %>%
+                         arrange(B) %>% 
+                         ungroup() %>%
+                         mutate(N_B_string=paste0("K=",scales::comma(B),", N=",scales::comma(n))) %>%
+                         mutate(N_B_string = factor(N_B_string, levels=unique(N_B_string))) %>% 
+                         left_join(methods_list_pareto)
+
+pareto_colors <- with(methods_list_pareto, setNames(color, method_pretty))
+
+```
+
+```{r fig.width=12, fig.height=4, fig.retina=10}
+pareto_sims_plot <- ggplot(pareto_eval_df, aes(x=unif_ub, y=MSE, col=method_pretty, shape=method_pretty)) + 
+                 geom_point(alpha=0.95, size=0.8) +
+                 geom_text_repel(data=dplyr::filter(pareto_eval_df, 
+                                             (unif_ub > 3.95)), 
+                                          aes(x = unif_ub, y=MSE, 
+                                              col=method_pretty,
+                                              label=method_pretty,
+                                              segment.square  = TRUE,
+                                              segment.inflect = TRUE),
+                                          segment.colour="darkgrey",
+                                          force = 1,
+                                          nudge_x           = 0.3,
+                                          direction         = "y", 
+                                          segment.size      = 0.32,
+                                          segment.curvature = -0.002,
+                                          max.overlaps=Inf,
+                                          min.segment.length = 0) + 
+                  geom_line(size=0.7, alpha=0.9) +
+                  scale_color_manual(values=pareto_colors) + 
+                  scale_x_continuous(expand = expansion(mult = c(0.01,0.27))) + 
+                  xlab(expression('Maximum mean '*mu[max]*'  ( '*mu[i]*' ~ U[2, '*mu[max]*'] )')) + 
+                  ylab("MSE") +
+                  scale_y_log10(lim=c(0.0001,0.34), labels=scales::trans_format('log10',scales::math_format(10^.x))) +
+                  facet_wrap(~N_B_string) +
+                  theme_cowplot() +  
+                  guides(colour = guide_legend(nrow=1)) + 
+                  theme(legend.position="none",legend.title=element_blank())
+  
+     
+pareto_sims_plot
+save_plot("pareto_simulation.pdf",pareto_sims_plot, base_height=4, base_width=12)
+
+```                          
+ 
+
+
+## Session info
+```{r} 
+library("sessioninfo")
+options(width = 120)
+session_info()
+```

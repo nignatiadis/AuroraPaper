@@ -1,0 +1,113 @@
+---
+title: 'Motivation for Aurora'
+author: "Nikos Ignatiadis"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteIndexEntry{Motivation for Aurora}
+    \usepackage[utf8]{inputenc}
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning=FALSE, message=FALSE, result=FALSE}
+library(AuroraR)
+library(tidyverse)
+library(cowplot)
+```
+
+
+##    $E[Y|X]$ is the same as $E[\mu | X]$
+
+```{r fig.width=8, fig.height=3.5, fig.retina=10}
+method_colors <- c("darkblue", "#B40F20")
+
+set.seed(1)
+n <- 1000
+sigma_3c <- 1
+effect_sizes_3c <- 3*c(-1:1)
+three_component_two_reps <- three_component_normal_sim(n, 2,
+                                                sigma=sigma_3c, 
+                                                A = 9/1.5)
+
+bayes_three_component <- function(zs, n=2000, sigma=1, sigma_prior = 0, effect_sizes = 3*(-1:1)){
+  sigma_marginal <- sqrt(sigma^2 + sigma_prior^2)
+  num <- sapply(zs, function(z) sum( effect_sizes*dnorm(z,  effect_sizes, sigma_marginal)))
+  denom <- sapply(zs, function(z) sum(dnorm(z,  effect_sizes, sigma_marginal)))
+  num/denom
+}
+
+three_component_df_two_reps <- with(three_component_two_reps, tibble(xs=Zs[,1],
+                             ys=Zs[,2], 
+                             mus=true_mus,
+                             bayes_rule = bayes_three_component(Zs[,1], 
+                                                sigma=sigma_3c, 
+                                                effect_sizes = effect_sizes_3c), 
+                             prior= "Three-point prior"))
+ggplot(three_component_df_two_reps, aes(x=xs,y=ys)) +
+                 geom_point(color=method_colors[1], alpha=0.5) + 
+                 xlab(expression(X[i])) + 
+                 ylab(expression(Y[i])) + 
+                 geom_line(aes(x=xs,y=bayes_rule, color="placeholder"),
+                           size=2, color=method_colors[2]) + 
+                 theme_cowplot() 
+```
+
+
+```{r fig.width=6, fig.height=3.5, fig.retina=10}
+set.seed(2)
+A_nn = 4
+sigma_nn = 1
+normal_normal_two_reps <- normal_normal_sim(m=n, B=2,
+                                        sigma=sigma_nn/sqrt(2),
+                                        A=A_nn,
+                                        prior_mu=0.5)
+
+bayes_normal_normal <- function(zs, A=1, sigma=1, prior_mu=0){
+  lambda <- A/(A+sigma^2)
+  zs*lambda + prior_mu*(1-lambda)
+}
+
+normal_normal_two_reps_df <- with(normal_normal_two_reps,
+                                  tibble(xs=Zs[,1],
+                                         ys=Zs[,2], 
+                                         mus=true_mus,
+                                         bayes_rule=bayes_normal_normal(Zs[,1],
+                                                                        A=A_nn,
+                                                                        sigma=sigma_nn,
+                                                                        prior_mu=0.5),
+                                         prior="Normal prior"))
+
+ggplot(normal_normal_two_reps_df, aes(x=xs,y=ys)) +
+                 geom_point(color=method_colors[1], alpha=0.5) + 
+                 xlab(expression(X[i])) + 
+                 ylab(expression(Y[i])) + 
+                 geom_line(aes(x=xs,y=bayes_rule, color="placeholder"), size=2, color=method_colors[2]) + 
+                 theme_cowplot() 
+```
+
+Put two plots together:
+```{r fig.width=8, fig.height=3.5, fig.retina=10}
+two_reps_df <- rbind(three_component_df_two_reps, normal_normal_two_reps_df )
+two_reps_plot <- ggplot(two_reps_df, aes(x=xs,y=ys)) +
+                 geom_point(color=method_colors[1], alpha=0.25) + 
+                 xlab(expression(X[i])) + 
+                 ylab(expression(Y[i])) + 
+                 xlim(-7,7) + 
+                 geom_line(aes(x=xs,y=bayes_rule), size=1.7,
+                           alpha=1, color=method_colors[2]) +  
+                 theme_cowplot()  +
+                 coord_fixed(ratio=1) +
+                 theme(legend.title=element_blank()) +
+                 facet_grid(.~prior) 
+two_reps_plot
+```
+
+```{r}
+ggsave("two_replicates_plot.pdf", width=12, height=4.0,  units="in")
+```
