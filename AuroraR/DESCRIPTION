@@ -1,0 +1,21 @@
+Package: AuroraR
+Type: Package
+Title: Averages of Units by Regressing on Ordered Replicates Adaptively
+Version: 0.1.0
+Author: Nikos Ignatiadis
+Maintainer: Nikos Ignatiadis <nikos.ignatiadis01@gmail.com>
+Description: Code to facilitate reproduction of the results in the 
+    paper "Empirical Bayes mean estimation with nonparametric errors
+    via order statistic regression" available on arXiv
+    (arxiv.org/abs/1911.05970). 
+    This package also provides a wrapper of the Julia package Aurora.jl (https://github.com/nignatiadis/Aurora.jl).
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+Imports:
+    JuliaCall,
+    REBayes
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+License: MIT + file LICENSE
