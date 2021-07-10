@@ -30,13 +30,14 @@ pareto_res <-  lapply(files_names, readRDS)
 ```{r}
 # http://tsitsul.in/blog/coloropt/
 methods_list_pareto <- bind_rows( 
-      tibble(method = "auroral"          , method_pretty = "Auroral"    , short = "Al"   ,  color="#4053d3",  shrinkage="linear"),
-      tibble(method = "ccl"              , method_pretty = "CC-L"       , short = "CC-L" ,  color="#ddb310",  shrinkage="linear"), 
+      tibble(method = "auroraKNN"        , method_pretty = "Aur-kNN"    , short ="A-KNN" , color="#00beff" ,  shrinkage="nonlinear"),
+      tibble(method = "auroral"          , method_pretty = "Auroral"    , short = "Al"   , color="#4053d3" ,  shrinkage="linear"),
+      tibble(method = "ccl"              , method_pretty = "CC-L"       , short = "CC-L" , color="#ddb310" ,  shrinkage="linear"), 
       tibble(method = "location_mean"    , method_pretty = "Mean"       , short = "Mean" , color="#8c9fb7" ,  shrinkage="no shrinkage"),
-      tibble(method = "location_median"  , method_pretty = "Median"     , short = "Med." ,  color="#ff9287",  shrinkage="no shrinkage"),
-      tibble(method = "pareto_mle"       , method_pretty = "Pareto MLE"   , short = "MR"   , color="#00bbad" ,  shrinkage="no shrinkage")
+      tibble(method = "location_median"  , method_pretty = "Median"     , short = "Med." , color="#ff9287" ,  shrinkage="no shrinkage"),
+      tibble(method = "pareto_mle"       , method_pretty = "Pareto MLE" , short = "MR"   , color="#00bbad" ,  shrinkage="no shrinkage")
         ) %>%
-      mutate(method_pretty=factor(method_pretty, levels=method_pretty))
+    mutate(method_pretty=factor(method_pretty, levels=method_pretty))
 ```
 
 ## Plotting of results
@@ -47,8 +48,8 @@ methods_list_pareto <- bind_rows(
 ```{r}
 pareto_eval_df <- bind_rows(pareto_res) %>% 
                          group_by(method, unif_ub, n,B) %>% 
-                         summarize(MSE=mean(error)) %>%
-                         filter(!(B==20 & n==100000)) %>%
+                         summarize(MSE=mean(error), nmontecarlo=n()) %>%
+                         filter( (B==20 & n==10000) | (B==100 & n==10000) | (B==100 & n==100000)) %>%
                          arrange(B) %>% 
                          ungroup() %>%
                          mutate(N_B_string=paste0("K=",scales::comma(B),", N=",scales::comma(n))) %>%
@@ -56,11 +57,14 @@ pareto_eval_df <- bind_rows(pareto_res) %>%
                          left_join(methods_list_pareto)
 
 pareto_colors <- with(methods_list_pareto, setNames(color, method_pretty))
-
+```
+```{r}
+nrow(pareto_eval_df) # 10*3*6
 ```
 
+
 ```{r fig.width=12, fig.height=4, fig.retina=10}
-pareto_sims_plot <- ggplot(pareto_eval_df, aes(x=unif_ub, y=MSE, col=method_pretty, shape=method_pretty)) + 
+pareto_sims_plot <- ggplot(pareto_eval_df, aes(x=unif_ub, y=MSE, col=method_pretty)) + 
                  geom_point(alpha=0.95, size=0.8) +
                  geom_text_repel(data=dplyr::filter(pareto_eval_df, 
                                              (unif_ub > 3.95)), 
@@ -85,13 +89,11 @@ pareto_sims_plot <- ggplot(pareto_eval_df, aes(x=unif_ub, y=MSE, col=method_pret
                   scale_y_log10(lim=c(0.0001,0.34), labels=scales::trans_format('log10',scales::math_format(10^.x))) +
                   facet_wrap(~N_B_string) +
                   theme_cowplot() +  
-                  guides(colour = guide_legend(nrow=1)) + 
                   theme(legend.position="none",legend.title=element_blank())
   
      
 pareto_sims_plot
 save_plot("pareto_simulation.pdf",pareto_sims_plot, base_height=4, base_width=12)
-
 ```                          
  
 
