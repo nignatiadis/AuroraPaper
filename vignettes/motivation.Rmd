@@ -32,23 +32,25 @@ n <- 1000
 sigma_3c <- 1
 effect_sizes_3c <- 3*c(-1:1)
 three_component_two_reps <- three_component_normal_sim(n, 2,
-                                                sigma=sigma_3c, 
+                                                sigma=sigma_3c/sqrt(2), 
                                                 A = 9/1.5)
 
-bayes_three_component <- function(zs, n=2000, sigma=1, sigma_prior = 0, effect_sizes = 3*(-1:1)){
-  sigma_marginal <- sqrt(sigma^2 + sigma_prior^2)
-  num <- sapply(zs, function(z) sum( effect_sizes*dnorm(z,  effect_sizes, sigma_marginal)))
-  denom <- sapply(zs, function(z) sum(dnorm(z,  effect_sizes, sigma_marginal)))
+bayes_three_component <- function(zs, sigma = 1, effect_sizes = 3*(-1:1)){
+  num <- sapply(zs, function(z) sum( effect_sizes*dnorm(z, effect_sizes, sigma)))
+  denom <- sapply(zs, function(z) sum(dnorm(z, effect_sizes, sigma)))
   num/denom
 }
 
-three_component_df_two_reps <- with(three_component_two_reps, tibble(xs=Zs[,1],
-                             ys=Zs[,2], 
-                             mus=true_mus,
-                             bayes_rule = bayes_three_component(Zs[,1], 
+three_component_df_two_reps <- with(three_component_two_reps,
+                                    tibble(xs=Zs[,1],
+                                           ys=Zs[,2], 
+                                           mus=true_mus,
+                                           bayes_rule = bayes_three_component(
+                                                Zs[,1], 
                                                 sigma=sigma_3c, 
                                                 effect_sizes = effect_sizes_3c), 
-                             prior= "Three-point prior"))
+                                            prior= "Three-point prior"))
+
 ggplot(three_component_df_two_reps, aes(x=xs,y=ys)) +
                  geom_point(color=method_colors[1], alpha=0.5) + 
                  xlab(expression(X[i])) + 
@@ -61,14 +63,15 @@ ggplot(three_component_df_two_reps, aes(x=xs,y=ys)) +
 
 ```{r fig.width=6, fig.height=3.5, fig.retina=10}
 set.seed(2)
-A_nn = 4
-sigma_nn = 1
+A_nn <- 4
+sigma_nn <- 1
+prior_mu <- 0.5
 normal_normal_two_reps <- normal_normal_sim(m=n, B=2,
                                         sigma=sigma_nn/sqrt(2),
                                         A=A_nn,
                                         prior_mu=0.5)
 
-bayes_normal_normal <- function(zs, A=1, sigma=1, prior_mu=0){
+bayes_normal_normal <- function(zs, A=1, sigma=1, prior_mu=prior_mu){
   lambda <- A/(A+sigma^2)
   zs*lambda + prior_mu*(1-lambda)
 }
@@ -80,7 +83,7 @@ normal_normal_two_reps_df <- with(normal_normal_two_reps,
                                          bayes_rule=bayes_normal_normal(Zs[,1],
                                                                         A=A_nn,
                                                                         sigma=sigma_nn,
-                                                                        prior_mu=0.5),
+                                                                        prior_mu=prior_mu),
                                          prior="Normal prior"))
 
 ggplot(normal_normal_two_reps_df, aes(x=xs,y=ys)) +
