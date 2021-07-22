@@ -21,7 +21,7 @@ bayes_three_component <- function(zs,  sigma=1, effect_sizes = 3*(-1:1)){
 }
 
 three_component_df_two_reps <- with(three_component_two_reps,
-                                    tibble(xs=Zs[,1],
+                                    data.frame(xs=Zs[,1],
                                            ys=Zs[,2], 
                                            mus=true_mus,
                                            bayes_rule = bayes_three_component(
@@ -64,7 +64,7 @@ bayes_normal_normal <- function(zs, A=1, sigma=1, prior_mu=prior_mu){
 }
 
 normal_normal_two_reps_df <- with(normal_normal_two_reps,
-                                  tibble(xs=Zs[,1],
+                                  data.frame(xs=Zs[,1],
                                          ys=Zs[,2], 
                                          mus=true_mus,
                                          bayes_rule=bayes_normal_normal(Zs[,1],
@@ -75,6 +75,7 @@ normal_normal_two_reps_df <- with(normal_normal_two_reps,
 
 
 
+expect_true( abs(var(normal_normal_two_reps_df$mus) - A_nn) < 0.01)
 
 
 expect_true( abs(mean((normal_normal_two_reps_df$xs - normal_normal_two_reps_df$mus)^2) - 1) < 0.01)
