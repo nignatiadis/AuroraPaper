@@ -26,7 +26,7 @@ aurora_setup(JULIA_HOME="/Applications/Julia-1.5.app/Contents/Resources/julia/bi
 ```{r}
 set.seed(1)
 B <- 10
-n <- 20*10^4
+n <- 2*10^5
 sigma <- sqrt(0.4)
 uninformative_A <- 20.0^2
 sim_list <- list( normal_normal_sim(n, B, sigma, uninformative_A, prior_mu=0.5),
@@ -92,8 +92,8 @@ coef_plot <- ggplot(coef_df, aes(x=coef_name, y=coef, ymin=coef, ymax=yend, colo
                              theme(axis.text.x = element_text(angle = 0)) +
                              theme_cowplot() +
                              scale_color_manual(values=c("darkblue", "darkorange")) + 
-                             geom_vline(xintercept = c(0.42,1.5, 10.58), alpha=0.2) +
-                             theme(legend.position="top",legend.title=element_blank(), legend.justification = "center", legend.margin=margin())
+                             geom_vline(xintercept = c(0.42, 1.5, 10.58), alpha=0.2) +
+                             theme(legend.position="top", legend.title=element_blank(), legend.justification = "center", legend.margin=margin())
 
 coef_plot
 save_plot("weight_plot.pdf",coef_plot, base_height=4, base_width=12)
@@ -105,3 +105,5 @@ library("sessioninfo")
 options(width = 120)
 session_info()
 ```
+
+

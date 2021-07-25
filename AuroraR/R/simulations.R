@@ -1,4 +1,3 @@
-
 #-------------------------
 # Simulation functions
 #--------------------------
@@ -39,7 +38,7 @@ normal_laplace_sim <- function(m, B, sigma, A, prior_mu=0){
 #' @export
 normal_uniform_sim <- function(m, B, sigma, A, prior_mu=0){
   mus <- stats::rnorm(m, prior_mu, sqrt(A))
-  # For U[-M,M], sigma^2 = M^2/3
+  # For U[-M,M], sigma^2 = M^2/3 => sigma = sigma*sqrt(B)
   Zs <- matrix( stats::runif(m*B, -sigma*sqrt(B*3), + sigma*sqrt(B*3)),  nrow=m) + mus
   res <- list(true_mus = mus, Zs = Zs, m=m, sigma=sigma, B=B, A=A, prior_mu=prior_mu)
   res
@@ -95,13 +94,11 @@ three_component_uniform_sim <- function(m, B, sigma, A = 9){
 
 
 
-
-
 #' Heteroskedastic location family simulations
 #'
 #' The variance of the replicates of unit i vary across units (randomly), as follows:
 #'
-#'  sigma_i^2 ~ U[sigma_squared_lower, sigma_squared_upper]/B,
+#'  sigma_i^2 ~ U[sigma_squared_lower, sigma_squared_upper],
 #'
 #' where B is the number of replicates per unit and
 #' sigma_squared_lower, sigma_squared_upper are simulation parameters.
@@ -222,4 +219,11 @@ uniform_pareto_sim <- function(m, B, pareto_alpha=3, unif_lb=0.1, unif_ub=1){
               m=m, B=B, pareto_alpha = pareto_alpha,
               unif_lb=unif_lb, unif_ub=unif_ub)
   res
+}
+
+# function for sanity checks, mse of sample average in above problem
+mse_pareto_location_mean <- function(unif_ub, B=20, unif_lb=2, pareto_alpha=3){
+  unif_second_moment <- (unif_ub + unif_lb)^2/4 + (unif_ub - unif_lb)^2/12
+  tmp_var <- unif_second_moment*((pareto_alpha - 1))^2/(pareto_alpha^2)*pareto_alpha/((pareto_alpha-1)^2*(pareto_alpha-2))
+  tmp_var/B
 }

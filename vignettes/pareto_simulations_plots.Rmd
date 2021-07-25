@@ -27,15 +27,17 @@ files_names <- file.path(files_dir, str_subset(list.files(files_dir), "pareto"))
 pareto_res <-  lapply(files_names, readRDS)
 ```
 
+
+
 ```{r}
 # http://tsitsul.in/blog/coloropt/
 methods_list_pareto <- bind_rows( 
-      tibble(method = "auroraKNN"        , method_pretty = "Aur-kNN"    , short ="A-KNN" , color="#00beff" ,  shrinkage="nonlinear"),
-      tibble(method = "auroral"          , method_pretty = "Auroral"    , short = "Al"   , color="#4053d3" ,  shrinkage="linear"),
-      tibble(method = "ccl"              , method_pretty = "CC-L"       , short = "CC-L" , color="#ddb310" ,  shrinkage="linear"), 
-      tibble(method = "location_mean"    , method_pretty = "Mean"       , short = "Mean" , color="#8c9fb7" ,  shrinkage="no shrinkage"),
-      tibble(method = "location_median"  , method_pretty = "Median"     , short = "Med." , color="#ff9287" ,  shrinkage="no shrinkage"),
-      tibble(method = "pareto_mle"       , method_pretty = "Pareto MLE" , short = "MR"   , color="#00bbad" ,  shrinkage="no shrinkage")
+      tibble(method = "auroraKNN"        , method_pretty = "Aur-kNN"    , short ="A-KNN" , color="#00beff"),
+      tibble(method = "auroral"          , method_pretty = "Auroral"    , short = "Al"   , color="#4053d3"),
+      tibble(method = "ccl"              , method_pretty = "CC-L"       , short = "CC-L" , color="#ddb310"), 
+      tibble(method = "location_mean"    , method_pretty = "Mean"       , short = "Mean" , color="#8c9fb7"),
+      tibble(method = "location_median"  , method_pretty = "Median"     , short = "Med." , color="#ff9287"),
+      tibble(method = "pareto_mle"       , method_pretty = "Pareto MLE" , short = "MR"   , color="#00bbad")
         ) %>%
     mutate(method_pretty=factor(method_pretty, levels=method_pretty))
 ```
@@ -48,7 +50,9 @@ methods_list_pareto <- bind_rows(
 ```{r}
 pareto_eval_df <- bind_rows(pareto_res) %>% 
                          group_by(method, unif_ub, n,B) %>% 
-                         summarize(MSE=mean(error), nmontecarlo=n()) %>%
+                         summarize(MSE=mean(error),
+                                   nmontecarlo=n(),
+                                   MSE_se = sd(error)/sqrt(nmontecarlo)) %>%
                          filter( (B==20 & n==10000) | (B==100 & n==10000) | (B==100 & n==100000)) %>%
                          arrange(B) %>% 
                          ungroup() %>%
@@ -59,7 +63,7 @@ pareto_eval_df <- bind_rows(pareto_res) %>%
 pareto_colors <- with(methods_list_pareto, setNames(color, method_pretty))
 ```
 ```{r}
-nrow(pareto_eval_df) # 10*3*6
+nrow(pareto_eval_df) # 10*3*6 = 180
 ```
 
 

@@ -23,7 +23,6 @@ methods_list_homosk <- list( auroral = function(Zs, sigmas) auroral(Zs),
                              location_midrange = function(Zs, sigmas) location_midrange(Zs),
                              ccl = function(Zs, sigmas) ebcc(Zs),
                              james_stein = function(Zs, sigmas) james_stein(Zs, sigma=mean(sigmas)),
-                             gmleb_oracle = function(Zs, sigmas) gmleb(Zs, sigma=sigmas),
                              gmleb = function(Zs, sigmas) gmleb(Zs, sigma=apply(Zs, 1 , sd)/sqrt(ncol(Zs)))
                             )
 
@@ -44,9 +43,9 @@ evaluate_single_homoskedastic_sim <- function(A, Likelihood, Prior="Normal", n=1
   tmp_error <- sapply(methods_list_homosk, function(f) mean( (f(tmp_sim$Zs, tmp_sim$sigma) - tmp_sim$true_mus)^2))
   tmp_df <- tibble( method=names(methods_list_homosk),
                     error = tmp_error,
-                    A=A,
-                    Prior=Prior,
-                    Likelihood = Likelihood)
+                    A = A,
+                    Prior = Prior,
+                    Likelihood = Likelihood )
   tmp_df
 }
 

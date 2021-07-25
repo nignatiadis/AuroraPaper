@@ -7,6 +7,11 @@ This repository provides code to reproduce the results of the following paper:
 
 
 The main method has been implemented in Julia and is available as the [Aurora.jl](https://github.com/nignatiadis/Aurora.jl) Julia package.
+
+## AuroraR
+[![R build status](https://github.com/nignatiadis/AuroraPaper/workflows/R-CMD-check/badge.svg)](https://github.com/nignatiadis/AuroraPaper/actions) 
+
+
 In the subdirectory `AuroraR` of this repository we provide a R package that wraps the Julia package and includes code for the different methods and simulations in the paper.
 
 The R package may be installed as follows:
@@ -14,11 +19,15 @@ The R package may be installed as follows:
 ```r
 devtools::install_github("nignatiadis/AuroraPaper", subdir="AuroraR")
 ```
+We note that the R package also wraps the nonparametric maximum likelihood (NPMLE) functionality from the [REBayes](https://cran.r-project.org/web/packages/REBayes/index.html) package. In turn, REBayes requires a working installation of the [Mosek](https://www.mosek.com/) convex optimization solver; we used Version 9.2.
+
+## Reproduction code
 
 The folder `simulation_scripts` contains the code for the simulation studies (that calls functions from the `AuroraR` package above). Concretely:
-* `simulation_scripts/homoskedastic_simulations.R` runs the simulations of Section 6.1.
-* `simulation_scripts/heteroskedastic_simulations.R` runs the simulations of Section 6.2.
-* `simulation_scripts/pareto_simulations.R` runs the simulations of Section 6.3.
+
+* `simulation_scripts/homoskedastic_simulations.R` runs the simulations of Section 6.1. It can be called in the terminal via `R homoskedastic_simulations.R arg1 dir`, where `arg1` can take on values 1,2,.., 6 (corresponding to different combinations of prior/likelihood) and `dir` is the directory in which Julia is installed.
+* `simulation_scripts/heteroskedastic_simulations.R` runs the simulations of Section 6.2. It can be called in the terminal via `R heteroskedastic_simulations.R arg1 dir` where `arg1` can take values 1,2 or 3 (for the three simulation settings considered) and `dir` is the Julia directory.
+* `simulation_scripts/pareto_simulations.R` runs the simulations of Section 6.3. (Warning: the case with 100,000 units and 100 replicates is slow and may take >20 hours per Monte Carlo replicate.)
 
 The `vignettes` folder contains R Markdown files that reproduce the figures from the paper, some of which require files that are generated from the three previous scripts. 
 

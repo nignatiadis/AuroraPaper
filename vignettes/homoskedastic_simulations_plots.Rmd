@@ -32,35 +32,46 @@ homosk_res <-  lapply(files_names, readRDS)
 ```{r}
 # http://tsitsul.in/blog/coloropt/
 methods_list_homosk <- bind_rows( 
-      tibble(method = "auroraKNN"        , method_pretty = "Aur-kNN"    , short ="A-KNN" , color="#00beff" ,  shrinkage="nonlinear"),
-      tibble(method = "auroral"          , method_pretty = "Auroral"    , short = "Al"   ,  color="#4053d3",  shrinkage="linear"),
-      tibble(method = "ccl"              , method_pretty = "CC-L / JS"       , short = "CC-L" ,  color="#ddb310",  shrinkage="linear"), 
-      tibble(method = "gmleb"            , method_pretty = "NPMLE"      , short = "NPMLE",  color="#b51d14",  shrinkage="nonlinear"),
-      tibble(method = "james_stein"      , method_pretty = "JS"         , short = "JS"   , color="#fb49b0" ,  shrinkage="linear"),
-      tibble(method = "location_mean"    , method_pretty = "Mean"       , short = "Mean" , color="#8c9fb7" ,  shrinkage="no shrinkage"),
-      tibble(method = "location_median"  , method_pretty = "Median"     , short = "Med." ,  color="#ff9287",  shrinkage="no shrinkage"),
-      tibble(method = "location_midrange", method_pretty = "Midrange"   , short = "MR"   , color="#00bbad" ,  shrinkage="no shrinkage")
-        ) %>%
+      tibble(method = "auroraKNN"        , method_pretty = "Aur-kNN"    , short ="A-KNN" ,  color="#00beff"),
+      tibble(method = "auroral"          , method_pretty = "Auroral"    , short = "Al"   ,  color="#4053d3"),
+      tibble(method = "ccl"              , method_pretty = "CC-L / JS"  , short = "CC-L" ,  color="#ddb310"), 
+      tibble(method = "gmleb"            , method_pretty = "NPMLE"      , short = "NPMLE",  color="#b51d14"),
+      tibble(method = "james_stein"      , method_pretty = "JS"         , short = "JS"   ,  color="#fb49b0"),
+      tibble(method = "location_mean"    , method_pretty = "Mean"       , short = "Mean" ,  color="#8c9fb7"),
+      tibble(method = "location_median"  , method_pretty = "Median"     , short = "Med." ,  color="#ff9287"),
+      tibble(method = "location_midrange", method_pretty = "Midrange"   , short = "MR"   ,  color="#00bbad")
+      ) %>%
       mutate(method_pretty=factor(method_pretty, levels=method_pretty))
 ```
 
-A quick sanity check that CC-L and James-Stein agree. 
+A quick sanity check that CC-L and James-Stein agree to $10^{-3}$. 
 
 
 ```{r}
 js_ccl_diff_tbl <- bind_rows(homosk_res) %>% 
   group_by(method, A, Likelihood, Prior) %>%
-  summarize(MSE=mean(error)) %>%
-  filter(method %in% c("james_stein", "ccl")) %>%
+  summarize(MSE=mean(error), nreps=n()) %>%
+  filter(method %in% c("james_stein", "ccl", "auroral")) %>%
   pivot_wider(names_from = method, values_from = MSE) %>%
   mutate(diff = ccl - james_stein)
 max(abs(js_ccl_diff_tbl$diff))
 ```
+We also check that Auroral is equally close to CC-L in the Normal-Normal panel.
+```{r}
+filter(js_ccl_diff_tbl, Prior == "Normal", Likelihood == "Normal") %>%
+      mutate(diff_aurL_cc = auroral - ccl) %>%
+      pull(diff_aurL_cc) %>%
+      abs %>% 
+      max
+```
+
+
+
 ```{r}
 homoskedastic_eval_df <- bind_rows(homosk_res) %>% 
                          group_by(method, A, Likelihood, Prior) %>% 
-                         summarize(MSE=mean(error)) %>%
-                         filter(method != "gmleb_oracle") %>%
+                         summarize(MSE=mean(error), nreps=n()) %>%
+                         filter(method %in% methods_list_homosk$method) %>%
                          filter(method != "james_stein") %>%
                          left_join(methods_list_homosk) %>%
                          mutate(pretty_likelihood = paste0("'F = ",Likelihood,"'")) %>%
@@ -70,7 +81,7 @@ homoskedastic_eval_df <- bind_rows(homosk_res) %>%
 homosk_colors <- with(methods_list_homosk, setNames(color, method_pretty))
 ```
 
-```{r fig.width=12, fig.height=8, fig.retina=10}
+```{r fig.width=14, fig.height=10, fig.retina=10}
 set.seed(1)
 homosk_plot <- ggplot(homoskedastic_eval_df, aes(x = sqrt(A), y=MSE , col=method_pretty)) + 
                           geom_point(alpha=0.95, size=0.8) +
@@ -80,9 +91,9 @@ homosk_plot <- ggplot(homoskedastic_eval_df, aes(x = sqrt(A), y=MSE , col=method
                                               segment.square  = TRUE,
                                               segment.inflect = TRUE),
                                           segment.colour="darkgrey",
-                                          force = 1,
-                                          nudge_x           = 0.25,
-                                          direction         = "y", 
+                                          force      = 1,
+                                          nudge_x    = 0.25,
+                                          direction  = "y", 
                                           segment.size      = 0.2,
                                           segment.curvature = -0.02,
                                           max.overlaps=Inf,
@@ -98,14 +109,12 @@ homosk_plot <- ggplot(homoskedastic_eval_df, aes(x = sqrt(A), y=MSE , col=method
                           theme(legend.title=element_blank(), legend.position = "none") 
 
 homosk_plot
-save_plot("homoskedastic_simulation.pdf", homosk_plot, base_height=10, base_width=14)
 ```   
 
  
 ```{r}
-save_plot("homoskedastic_simulation.pdf", homosk_plot, base_height=8, base_width=12)
+save_plot("homoskedastic_simulation.pdf", homosk_plot, base_height=10, base_width=14)
 ```
-
 
 ## Session info
 ```{r} 

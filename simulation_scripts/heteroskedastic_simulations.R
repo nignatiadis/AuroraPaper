@@ -21,12 +21,10 @@ methods_list_heterosk <- list( auroral = function(Zs, sigmas) auroral(Zs),
                                auroraKNN = function(Zs, sigmas) aurora_knn(Zs),
                                location_mean = function(Zs, sigmas) location_mean(Zs),
                                ccl = function(Zs, sigmas) ebcc(Zs),
-                               gmleb_oracle = function(Zs, sigmas) gmleb(Zs, sigma=sigmas),
                                gmleb = function(Zs, sigmas) gmleb(Zs, sigma=apply(Zs, 1 , sd)/sqrt(ncol(Zs))),
                                grouplinear_oracle = function(Zs, sigmas) grouplinear(Zs, sigma=sigmas),
                                grouplinear = function(Zs, sigmas) grouplinear(Zs, sigma=apply(Zs, 1 , sd)/sqrt(ncol(Zs))),
-                               sure_oracle = function(Zs, sigmas) sure_grandmean(Zs, sigma=sigmas),
-                               sure = function(Zs, sigmas) sure_grandmean(Zs, sigma=apply(Zs, 1 , sd)/sqrt(ncol(Zs)))
+                               sure_oracle = function(Zs, sigmas) sure_grandmean(Zs, sigma=sigmas)
                               )
 
 
@@ -44,7 +42,7 @@ evaluate_single_heterosk_sim <- function(Likelihood="WMBZ_C", n=10000, B=10,
                     n = n, 
                     B = B,
                     sigma_squared_upper = sigma_squared_upper,
-                    Likelihood = Likelihood)
+                    Likelihood = Likelihood )
   tmp_df
 }
 
@@ -54,22 +52,22 @@ setting_name <- heteroskedastic_setting_names[arg1]
 sigma_squared_lower <- 0.1
 sigma_squared_upper_list <- seq(1, to=3, length=10)
 nreps <- 100
+n <- 10000
+B <- 10
 
 heteroskedastic_param_df <-tibble( sigma_squared_upper=rep(sigma_squared_upper_list, each=nreps), Likelihood=setting_name)
 
 heteroskedastic_res <- bind_rows(lapply(1:nrow(heteroskedastic_param_df),
                                           function(i) {lik <- heteroskedastic_param_df$Likelihood[i];
                                           sigma_squared_upper <- heteroskedastic_param_df$sigma_squared_upper[i];
-                                          evaluate_single_heterosk_sim(n=10000,
-                                                                              B=10,
-                                                                              Likelihood=setting_name,
-                                                                              sigma_squared_lower=0.1,
-                                                                              sigma_squared_upper=sigma_squared_upper)}
+                                          evaluate_single_heterosk_sim(n=n,
+                                                                       B=B,
+                                                                       Likelihood=setting_name,
+                                                                       sigma_squared_lower=sigma_squared_lower,
+                                                                       sigma_squared_upper=sigma_squared_upper)}
 
                                         )
                                  )
 
 saveRDS(heteroskedastic_res,
         file.path("files", paste0(paste("heteroskedastic", setting_name, sep="_"),".rds")))
-
-

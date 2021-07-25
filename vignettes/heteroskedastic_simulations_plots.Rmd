@@ -33,15 +33,15 @@ heterosk_res <-  lapply(files_names, readRDS)
 ```{r}
 # http://tsitsul.in/blog/coloropt/
 methods_list_heterosk <- bind_rows( 
-      tibble(method = "auroraKNN"         , method_pretty = "Aur-kNN"      , short ="A-KNN" , color="#00beff" ),
-      tibble(method = "auroral"           , method_pretty = "Auroral"      , short = "Al"   ,  color="#4053d3"),
-      tibble(method = "ccl"               , method_pretty = "CC-L"         , short = "CC-L" ,  color="#ddb310"), 
-      tibble(method = "gmleb"             , method_pretty = "NPMLE"        , short = "NPMLE",  color="#b51d14"),
-      tibble(method = "sure_oracle"       , method_pretty = "SURE (or.)"   , short = "JS"   , color="#fb49b0" ),
-      tibble(method = "location_mean"     , method_pretty = "Mean"         , short = "Mean" , color="#8c9fb7" ),
-      tibble(method = "grouplinear"       , method_pretty = "GL"           , short = "Med." ,  color="#ff9287"),
-      tibble(method = "grouplinear_oracle", method_pretty = "GL (or.)"    , short = "MR"   , color="#00bbad" )
-        ) %>%
+      tibble(method = "auroraKNN"         , method_pretty = "Aur-kNN"    , color="#00beff"),
+      tibble(method = "auroral"           , method_pretty = "Auroral"    , color="#4053d3"),
+      tibble(method = "ccl"               , method_pretty = "CC-L"       , color="#ddb310"), 
+      tibble(method = "gmleb"             , method_pretty = "NPMLE"      , color="#b51d14"),
+      tibble(method = "sure_oracle"       , method_pretty = "SURE (or.)" , color="#fb49b0"),
+      tibble(method = "location_mean"     , method_pretty = "Mean"       , color="#8c9fb7"),
+      tibble(method = "grouplinear"       , method_pretty = "GL"         , color="#ff9287"),
+      tibble(method = "grouplinear_oracle", method_pretty = "GL (or.)"   , color="#00bbad")
+      ) %>%
       mutate(method_pretty=factor(method_pretty, levels=method_pretty))
 ```
 
@@ -58,8 +58,8 @@ pretty_likelihood_heterosk <- tibble(Likelihood = c("WMBZ_A", "WMBZ_C", "WMBZ_F"
 
 heterosk_eval_df <- bind_rows(heterosk_res) %>% 
                            group_by(method, Likelihood, sigma_squared_upper) %>% 
-                           summarize(MSE=mean(error)) %>%
-                           filter(method != "sure" & method != "gmleb_oracle") %>%
+                           summarize(MSE=mean(error), nreps=n()) %>%
+                           filter(method %in% methods_list_heterosk$method) %>%
                            left_join(methods_list_heterosk) %>% 
                            filter(((Likelihood!= "WMBZ_A" | method!="location_mean" | MSE < 0.7))) %>%
                            left_join(pretty_likelihood_heterosk)
@@ -71,34 +71,37 @@ heterosk_colors <- with(methods_list_heterosk, setNames(color, method_pretty))
 set.seed(1)
 heterosk_plot <- ggplot(heterosk_eval_df,
                         aes(x = sigma_squared_upper, y=MSE, col=method_pretty)) + 
-                 geom_point(alpha=0.95, size=0.8) +
-                          geom_text_repel(data=dplyr::filter(heterosk_eval_df, 
-                                             (sigma_squared_upper > 2.9) | (Likelihood== "WMBZ_A" & method=="location_mean" & sigma_squared_upper >1.0)), 
-                                          aes(x = sigma_squared_upper, y=MSE, 
-                                              col=method_pretty,
-                                              label=method_pretty,
-                                              segment.square  = TRUE,
-                                              segment.inflect = TRUE),
-                                          segment.colour="darkgrey",
-                                          force = 1,
-                                          nudge_x           = 0.3,
-                                          direction         = "y", 
-                                          segment.size      = 0.32,
-                                          segment.curvature = -0.002,
-                                          max.overlaps=Inf,
-                                          min.segment.length = 0) + 
-                  geom_line(size=0.7, alpha=0.9) +
-                  scale_color_manual(values=heterosk_colors) + 
-                  scale_x_continuous(expand = expansion(mult = c(0.01,0.27)), breaks=seq(1.0,3.0,by=0.5)) + 
-                  scale_y_log10() +
-                  xlab(expression(paste("Maximum variance ", 
-                                        bar(sigma)[max]^2, "   ( ", bar(sigma)[i]^2,"~U", group("[",list(0.1, bar(sigma)[max]^2),"]"), " )"))) +
-                  facet_wrap(~parsed_likelihood, scales="free", labeller=label_parsed) +
-                  theme_cowplot() +  
-                  guides(colour = guide_legend(nrow=1)) + 
-                  theme(legend.position="none",legend.title=element_blank())
-  
+  geom_point(alpha=0.95, size=0.8) +
+  geom_text_repel(data=dplyr::filter(heterosk_eval_df, 
+                                     (sigma_squared_upper > 2.9) | (Likelihood== "WMBZ_A" & method=="location_mean" & sigma_squared_upper >1.0)), 
+                  aes(x = sigma_squared_upper, y=MSE, 
+                      col=method_pretty,
+                      label=method_pretty,
+                      segment.square  = TRUE,
+                      segment.inflect = TRUE),
+                  segment.colour="darkgrey",
+                  force = 1,
+                  nudge_x           = 0.3,
+                  direction         = "y", 
+                  segment.size      = 0.32,
+                  segment.curvature = -0.002,
+                  max.overlaps=Inf,
+                  min.segment.length = 0) + 
+  geom_line(size=0.7, alpha=0.9) +
+  scale_color_manual(values=heterosk_colors) + 
+  scale_x_continuous(expand = expansion(mult = c(0.01,0.27)), breaks=seq(1.0,3.0,by=0.5)) + 
+  scale_y_log10() +
+  xlab(expression(paste("Maximum variance ", 
+                        bar(sigma)[max]^2, "   ( ", bar(sigma)[i]^2,"~U", group("[",list(0.1, bar(sigma)[max]^2),"]"), " )"))) +
+  facet_wrap(~parsed_likelihood, scales="free", labeller=label_parsed) +
+  theme_cowplot() +  
+  guides(colour = guide_legend(nrow=1)) + 
+  theme(legend.position="none",legend.title=element_blank())
+
 heterosk_plot
+```
+
+```{r}
 save_plot("heteroskedastic_simulation.pdf", heterosk_plot, base_height=5, base_width=14)
 ```
 
