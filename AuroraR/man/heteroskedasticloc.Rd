@@ -38,7 +38,7 @@ A list with the following entries:
 The variance of the replicates of unit i vary across units (randomly), as follows:
 }
 \details{
-sigma_i^2 ~ U[sigma_squared_lower, sigma_squared_upper]/B,
+sigma_i^2 ~ U[sigma_squared_lower, sigma_squared_upper],
 
 where B is the number of replicates per unit and
 sigma_squared_lower, sigma_squared_upper are simulation parameters.

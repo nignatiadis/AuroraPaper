@@ -10,6 +10,7 @@ The main method has been implemented in Julia and is available as the [Aurora.jl
 
 ## AuroraR
 [![R build status](https://github.com/nignatiadis/AuroraPaper/workflows/R-CMD-check/badge.svg)](https://github.com/nignatiadis/AuroraPaper/actions) 
+[![codecov](https://codecov.io/gh/nignatiadis/AuroraPaper/branch/main/graph/badge.svg?token=j8JBrFe6Ks)](https://codecov.io/gh/nignatiadis/AuroraPaper)
 
 
 In the subdirectory `AuroraR` of this repository we provide a R package that wraps the Julia package and includes code for the different methods and simulations in the paper.
