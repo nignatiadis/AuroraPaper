@@ -116,6 +116,97 @@ homosk_plot
 save_plot("homoskedastic_simulation.pdf", homosk_plot, base_height=10, base_width=14)
 ```
 
+
+## For talks
+
+
+```{r}
+methods_exclude <- c("james_stein", "ccl", "gmleb")
+
+homoskedastic_talk_eval_df <- bind_rows(homosk_res) %>% 
+                         group_by(method, A, Likelihood, Prior) %>% 
+                         summarize(MSE=mean(error), nreps=n()) %>%
+                         filter(method %in% methods_list_homosk$method) %>%
+                         filter(!(method %in% methods_exclude)) %>%
+                         left_join(methods_list_homosk) %>%
+                         mutate(pretty_likelihood = paste0("'F = ",Likelihood,"'")) %>%
+                         mutate(pretty_likelihood = factor(pretty_likelihood, levels=c("'F = Normal'", "'F = Laplace'", "'F = Rectangular'"))) %>%
+                         mutate(pretty_prior = ifelse(Prior=="Normal","'Normal prior'", "'Three-point prior'"))
+
+homosk_talk_colors <- with(methods_list_homosk, setNames(color, method_pretty))
+```
+
+```{r fig.width=11, fig.height=4, fig.retina=10}
+set.seed(1)
+normal_prior_eval_df <- filter(homoskedastic_talk_eval_df, Prior == "Normal")
+homoskedastic_talk_plot <- ggplot(normal_prior_eval_df,
+                                  aes(x = sqrt(A), y=MSE , col=method_pretty)) + 
+                          geom_point(alpha=0.95, size=1.3) +
+                          geom_text_repel(data=dplyr::filter(normal_prior_eval_df,  A > 5.5 & A < 6.0), 
+                                          aes(x = sqrt(A), y=MSE, col=method_pretty,
+                                              label=method_pretty,
+                                              segment.square  = TRUE,
+                                              segment.inflect = TRUE),
+                                          segment.colour="darkgrey",
+                                          force      = 1,
+                                          nudge_x    = 0.25,
+                                          direction  = "y", 
+                                          segment.size      = 0.4,
+                                          segment.curvature = -0.02,
+                                          max.overlaps=Inf,
+                                          min.segment.length = 0) + 
+                          geom_line(size=1.3, alpha=0.9) +
+                          scale_x_continuous(expand = expansion(mult = c(0.01,0.25))) + 
+                          scale_y_log10(breaks=c(0.1,  0.4, 0.7, 1.0, 1.3, 1.6)) +
+                          scale_color_manual(values=homosk_talk_colors) + 
+                          scale_fill_manual(values=homosk_talk_colors) + 
+                          xlab(expression('Prior standard deviation '*sqrt(A)))+
+                          facet_grid(.~ pretty_likelihood, labeller = label_parsed)+ 
+                          theme_cowplot() + 
+                          theme(legend.title=element_blank(), legend.position = "none") 
+
+homoskedastic_talk_plot
+```
+
+```{r}
+save_plot("homoskedastic_talk_simulation.pdf", homoskedastic_talk_plot, base_height=4, base_width=11)
+```       
+
+```{r fig.width=8, fig.height=4, fig.retina=10}
+set.seed(1)
+normal_likelihood_eval_df <- filter(homoskedastic_talk_eval_df, Likelihood == "Normal")
+homoskedastic_talk_plot_likelihood <- ggplot(normal_likelihood_eval_df,
+                                  aes(x = sqrt(A), y=MSE , col=method_pretty)) + 
+                          geom_point(alpha=0.95, size=1.3) +
+                          geom_text_repel(data=dplyr::filter(normal_likelihood_eval_df,  A > 5.5 & A < 6.0), 
+                                          aes(x = sqrt(A), y=MSE, col=method_pretty,
+                                              label=method_pretty,
+                                              segment.square  = TRUE,
+                                              segment.inflect = TRUE),
+                                          segment.colour="darkgrey",
+                                          force      = 1,
+                                          nudge_x    = 0.25,
+                                          direction  = "y", 
+                                          segment.size      = 0.4,
+                                          segment.curvature = -0.02,
+                                          max.overlaps=Inf,
+                                          min.segment.length = 0) + 
+                          geom_line(size=1.3, alpha=0.9) +
+                          scale_x_continuous(expand = expansion(mult = c(0.01,0.25))) + 
+                          scale_y_log10(breaks=c(0.1,  0.4, 0.7, 1.0, 1.3, 1.6)) +
+                          scale_color_manual(values=homosk_talk_colors) + 
+                          scale_fill_manual(values=homosk_talk_colors) + 
+                          xlab(expression('Prior standard deviation '*sqrt(A)))+
+                          facet_grid(.~ pretty_prior, labeller = label_parsed)+ 
+                          theme_cowplot() + 
+                          theme(legend.title=element_blank(), legend.position = "none") 
+homoskedastic_talk_plot_likelihood
+```
+
+```{r}
+save_plot("homoskedastic_talk_simulation_likelihood.pdf", homoskedastic_talk_plot_likelihood, base_height=4, base_width=8)
+```
+
 ## Session info
 ```{r} 
 library("sessioninfo")
