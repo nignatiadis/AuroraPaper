@@ -99,6 +99,44 @@ coef_plot
 save_plot("weight_plot.pdf",coef_plot, base_height=4, base_width=12)
 ```
 
+## Coefficient figure for talks
+
+```{r fig.width = 11.4, fig.height = 4}
+coef_plot_uninf <- ggplot(filter(coef_df, Prior==uninf_prior), aes(x=coef_name, y=coef, ymin=coef, ymax=yend, color=Prior, shape=Prior)) + 
+                             geom_point(size=4) + 
+                             geom_linerange(size=1.3, alpha=0.7) + 
+                             ylab("Coefficient") + 
+                             xlab("")+
+                             scale_x_discrete(labels = function(l) parse(text=l)) + 
+                             facet_grid(~Likelihood, scales="free_y") + 
+                             theme(axis.text.x = element_text(angle = 0)) +
+                             theme_cowplot() +
+                             scale_color_manual(values=c("darkblue")) + 
+                             geom_vline(xintercept = c(0.42, 1.5, 10.58), alpha=0.3) +
+                             theme(legend.position="top", legend.title=element_blank(), legend.justification = "center", legend.margin=margin())
+
+coef_plot_uninf
+save_plot("weight_plot_uninf.pdf",coef_plot_uninf, base_height=4, base_width=11.4)
+
+```
+```{r fig.width = 11.4, fig.height = 4}
+coef_plot_both <- ggplot(coef_df, aes(x=coef_name, y=coef, ymin=coef, ymax=yend, color=Prior, shape=Prior)) + 
+                             geom_point(size=4, position=position_dodge(width=0.7)) + 
+                             geom_linerange(size=1.3, position=position_dodge(width=0.7), alpha=0.7) + 
+                             ylab("Coefficient") + 
+                             xlab("")+
+                             scale_x_discrete(labels = function(l) parse(text=l)) + 
+                             facet_grid(~Likelihood, scales="free_y") + 
+                             theme(axis.text.x = element_text(angle = 0)) +
+                             theme_cowplot() +
+                             scale_color_manual(values=c("darkblue", "darkorange")) + 
+                             geom_vline(xintercept = c(0.42, 1.5, 10.58), alpha=0.3) +
+                             theme(legend.position="top", legend.title=element_blank(), legend.justification = "center", legend.margin=margin())
+
+coef_plot
+save_plot("weight_plot_both.pdf",coef_plot_both, base_height=4, base_width=11.4)
+```
+
 ## Session info
 ```{r} 
 library("sessioninfo")
