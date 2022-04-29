@@ -2,8 +2,10 @@
 
 This repository provides code to reproduce the results of the following paper:
 
+> Nikolaos Ignatiadis, Sujayam Saha, Dennis L. Sun & Omkar Muralidharan (2021) **Empirical Bayes Mean Estimation With Nonparametric Errors Via Order Statistic Regression on Replicated Data**, Journal of the American Statistical Association, DOI: 10.1080/01621459.2021.1967164
 
-> Ignatiadis, N., Saha, S., Sun D. L., & Muralidharan, O. (2019).  **Empirical Bayes mean estimation with nonparametric errors via order statistic regression.** [[arXiv]](https://arxiv.org/abs/1911.05970)
+The paper is also available on arXiv:
+> Nikolaos Ignatiadis, Sujayam Saha, Dennis L. Sun & Omkar Muralidharan (2021).  **Empirical Bayes mean estimation with nonparametric errors via order statistic regression on replicated data.** [[arXiv]](https://arxiv.org/abs/1911.05970)
 
 
 The main method has been implemented in Julia and is available as the [Aurora.jl](https://github.com/nignatiadis/Aurora.jl) Julia package.
